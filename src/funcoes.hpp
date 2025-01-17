@@ -34,26 +34,26 @@ class Funcoes
 public:
 
 
-    int quantidade_pares(int a){
+    int quantidade_pares(int a)const {
         return a*(a-1)/2;
     }
 
-    void ordenar_distancias(vector<Pair> &distances)
+    void ordenar_distancias(vector<Pair> &distances) const
     {
         std::sort(distances.begin(), distances.end(), comparar_distancias);
     }
 
-    void ordenar_tam_maximo(vector<Grupo> &grupos)
+    void ordenar_tam_maximo(vector<Grupo> &grupos) const
     {
         std::sort(grupos.begin(), grupos.end(), comparar_tam_maximo);
     }
 
-    void ordenar_tam_minimo(vector<Grupo> &grupos)
+    void ordenar_tam_minimo(vector<Grupo> &grupos) const
     {
         std::sort(grupos.begin(), grupos.end(), comparar_tam_minimo);
     }
 
-    double media(vector<Pair> &distances)
+    double media(vector<Pair> &distances) const
     {
         double soma = 0.0;
         for (long long unsigned int i = 0; i < distances.size(); i++)
@@ -67,7 +67,7 @@ public:
 
     // adicionamos um elemento em um grupo
     // não confere se grupo está cheio
-    void alocar_elemento(Grupo &grupo, vector<int> &elementos, int i)
+    void alocar_elemento(Grupo &grupo, vector<int> &elementos, int i) const
     {
         if (grupo.get_quantidade_elementos() == grupo.tam_maximo)
         {
@@ -81,7 +81,7 @@ public:
     }
 
     // usa a classe Lista_elementos
-    void alocar_elemento2(Grupo &grupo, Lista_elementos &lista_elementos, int elemento)
+    void alocar_elemento2(Grupo &grupo, Lista_elementos &lista_elementos, int elemento) const
     {
 
         if (grupo.get_quantidade_elementos() == grupo.tam_maximo)
@@ -103,7 +103,7 @@ public:
 
     // quando alocamos um elemento em um grupo precisamos ter certeza de que
     // ainda poderemos preencher o mínimo de elementos de todos os grupos.
-    int alocar_elemento3(Grupo &grupo, Lista_elementos &lista_elementos, vector<int> elementos, int elemento, int &quantidade_elementos_minimos)
+    int alocar_elemento3(Grupo &grupo, Lista_elementos &lista_elementos, vector<int> elementos, int elemento, int &quantidade_elementos_minimos) const
     {
 
         cout << elemento << endl;
@@ -152,7 +152,7 @@ public:
         return quantidade_elementos_minimos;
     }
 
-    vector<int> get_elementos(vector<Pair> distances)
+    vector<int> get_elementos(vector<Pair> distances) const
     {
         vector<int> elementos;
         int tamanho;
@@ -164,7 +164,7 @@ public:
         return elementos;
     }
 
-    vector<Grupo> get_grupos(Instance instance)
+    vector<Grupo> get_grupos(const Instance& instance) const
     {
 
         vector<Grupo> grupos;
@@ -181,7 +181,7 @@ public:
         return grupos;
     }
 
-    void imprimir_grupos(vector<Grupo> grupos)
+    void imprimir_grupos(vector<Grupo> grupos) const
     {
         for (int i = 0; i < grupos.size(); i++)
         {
@@ -198,7 +198,7 @@ public:
         }
     }
 
-    Pair get_pair(int elemento1, int elemento2, vector<Pair> &pares, int quantidade)
+    Pair get_pair(int elemento1, int elemento2, vector<Pair> &pares, int quantidade) const
     {
         elemento1 += 1;
         elemento2 += 1;
@@ -223,7 +223,7 @@ public:
         return pares[position];
     }
 
-    double get_total_grupo(Grupo grupo, vector<Pair> distances)
+    double get_total_grupo(Grupo grupo, vector<Pair> distances) const
     {
 
         int quantidade = grupo.elementos.size();
@@ -243,7 +243,7 @@ public:
         return total;
     }
 
-    double get_total(vector<Grupo> grupos, vector<Pair> distances)
+    double get_total(vector<Grupo> grupos, const vector<Pair>& distances) const
     {
         double total = 0;
         double a;
@@ -257,7 +257,7 @@ public:
     }
 
     // ATENÇÃO. não força a inserção em grupo que ainda não tem o tamanho mínimo cheio
-    int get_best_group(vector<Grupo> grupos, int elemento, vector<Pair> distances)
+    int get_best_group(vector<Grupo> grupos, int elemento, vector<Pair> distances) const
     {
 
         // criamos um array resultados com quantidade de grupos tamanho
@@ -347,7 +347,7 @@ public:
     }
 
     // para inserir em grupos que ainda não preencheram o tamanho mínimo
-    int get_best_group2(vector<Grupo> grupos, int elemento, vector<Pair> distances)
+    int get_best_group2(vector<Grupo> grupos, int elemento, vector<Pair> distances) const
     {
 
         // criamos um array resultados com quantidade de grupos tamanho
@@ -438,7 +438,7 @@ public:
 
     // igual o get_best_group, mas aumenta o valor para um grupo proporcionalmente
     // ao tamanho máximo do grupo
-    int get_best_group3(vector<Grupo> grupos, int elemento, vector<Pair> distances)
+    int get_best_group3(vector<Grupo> grupos, int elemento,vector<Pair> distances) const
     {
 
         // criamos um array resultados com quantidade de grupos tamanho
@@ -530,7 +530,7 @@ public:
     }
 
 
-    void trocaElementos(Grupo& grupo1, Grupo& grupo2, int elementoGrupo1index, int elementoGrupo2index){
+    void trocaElementos(Grupo& grupo1, Grupo& grupo2, int elementoGrupo1index, int elementoGrupo2index)const {
 
         int auxiliar = grupo1.elementos[elementoGrupo1index];  
          
@@ -540,7 +540,7 @@ public:
 
     }    
 
-    void trocaElementos2(Grupo& grupo1, Grupo& grupo2){
+    void trocaElementos2(Grupo& grupo1, Grupo& grupo2) const{
 
 
 
