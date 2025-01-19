@@ -323,7 +323,6 @@ public:
             space += grupos[i].tam_minimo;
         }
 
-        // nessa etapa garantimos que todos os tamanhos mínimos foram preenchidos
         bool while1 = true;
         bool primeira_vez_no_while = true;
 
@@ -337,11 +336,8 @@ public:
                 {
                     for (int i = 0; i < grupos.size(); i++)
                     {
-
-                        // se ainda tem grupos sem tamanho mínimo preenchido continuamos no while
                         if (grupos[i].get_quantidade_elementos() < grupos[i].tam_minimo)
                         {
-
                             funcoes.alocar_elemento(grupos[i], elementos, elementos.back());
                             space -= 1;
                             while1 = true;
@@ -353,23 +349,19 @@ public:
 
                 for (int i = 0; i < grupos.size(); i++)
                 {
-                    // se ainda tem grupos sem tamanho mínimo preenchido continuamos no while
                     if (grupos[i].get_quantidade_elementos() < grupos[i].tam_minimo)
                     {
                         int position = funcoes.get_best_group3(grupos, elementos.back(), instance.arr_Pair);
                         funcoes.alocar_elemento(grupos[grupos[position].i], elementos, elementos.back());
-
                         space -= 1;
                         while1 = true;
                     }
                 }
             }
-
             else
             {
                 for (int i = 0; i < grupos.size(); i++)
                 {
-                    // se ainda tem grupos sem tamanho mínimo preenchido continuamos no while
                     if (grupos[i].get_quantidade_elementos() < grupos[i].tam_minimo)
                     {
                         while1 = true;
@@ -385,7 +377,6 @@ public:
             }
         }
 
-        // adiciona os elementos restantes nas melhores posições
         while (elementos.size() > 0)
         {
             int position = funcoes.get_best_group3(grupos, elementos.back(), instance.arr_Pair);
@@ -484,7 +475,7 @@ public:
         // quanto maior a pontuação, mais o elemento está bem naquele grupo
         for (int i = 0; i < this->solucao.size(); i++)
         {
-            for (int i2 = 0; i2 < this->solucao[i].elementos.size(); i++)
+            for (int i2 = 0; i < this->solucao[i].elementos.size(); i++)
             {
                 atribuir_ponto_elemento(i, i2);
             }
@@ -967,13 +958,7 @@ public:
     }
 
     int get_melhor_melhora2()
-    {           
-        
-        /*
-        get_todos_vizinhos();               
-
-        int index = tem_maior_vizinho();
-        */
+    {
         int index = -1;
         
         Funcoes funcoes;
@@ -987,40 +972,29 @@ public:
 
         vector<Grupo> solucao_atual = this->solucao;
 
-        // fazer para todos os pares de grupos
         for (int i = 0; i < solucao_atual.size() - 1; i++)
         {
             for (int i2 = i + 1; i2 < solucao_atual.size(); i2++)
             {
-                // cout<<i<<", "<<i2 <<endl;
-                // para cada par de grupos nós trocamos o primeiro elemento
-                // de um grupo com o primeiro elemento de outro
-                // e adicionamos o resultado no array de vizinhos
-                funcoes.trocaElementos2(solucao_atual[i], solucao_atual[i2]);
+                Funcoes funcoes_local;
+                funcoes_local.trocaElementos2(solucao_atual[i], solucao_atual[i2]);
 
-                // adicionamos o vector de grupos com os elementos trocados no vizinho
                 Solution solucao1;
                 solucao1.instance = this->instance;
                 vizinhos2.push_back(solucao1);
                 vizinhos2.back().solucao = solucao_atual;
-
-                // adiciona ao vizinho um ponteiro para a solução de onde ele veio
                 vizinhos2.back().vizinhos = {};
                 vizinhos2.back().vizinhos.push_back(*this);
 
-                // restauramos a solução atual
-                funcoes.trocaElementos2(solucao_atual[i], solucao_atual[i2]);
+                funcoes_local.trocaElementos2(solucao_atual[i], solucao_atual[i2]);
 
-
-                //mantemos apenas o vizinho melhor e o atual
                 vizinho_atual = vizinhos2.back();
-
-                //removemos o vizinho da lista de vizinhos para não gastar memória
                 vizinhos2.pop_back();
 
-                resultado_atual = funcoes.get_total(vizinho_atual.solucao, this->instance.arr_Pair);
+                resultado_atual = funcoes_local.get_total(vizinho_atual.solucao, this->instance.arr_Pair);
 
-                if(resultado_atual> resultado_melhor){
+                if (resultado_atual > resultado_melhor)
+                {
                     resultado_melhor = resultado_atual;
                     vizinho_melhor = vizinho_atual;
                     index = 0;

@@ -1,8 +1,8 @@
 # Nome do compilador 
-CXX = g++
+CXX = clang++
 
 # Flags de compilação
-CXXFLAGS = -std=c++11 -Wall 
+CXXFLAGS = -std=c++11 -Wall -Xpreprocessor -fopenmp -I/usr/local/Cellar/libomp/19.1.7/include -L/usr/local/Cellar/libomp/19.1.7/lib -lomp
 
 # Nome do executável
 TARGET = main.exe

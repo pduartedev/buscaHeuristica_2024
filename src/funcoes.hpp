@@ -223,15 +223,14 @@ public:
         int quantidade = grupo.elementos.size();
         double total = 0;
         Pair par;
-        int quantidade_elementos;
+        int quantidade_elementos = distances[distances.size() - 1].second_Element + 1;
 
         for (int i = 0; i < quantidade - 1; i++)
         {
             for (int i2 = i + 1; i2 < quantidade; i2++)
             {
-                quantidade_elementos = distances[distances.size() - 1].second_Element + 1;
                 par = get_pair(grupo.elementos[i], grupo.elementos[i2], distances, quantidade_elementos);
-                total = total + (double)par.distance_Element;
+                total += (double)par.distance_Element;
             }
         }
         return total;

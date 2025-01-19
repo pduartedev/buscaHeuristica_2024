@@ -4,11 +4,12 @@
 #include <vector>
 #include <iomanip>
 #include <chrono>
+#include <omp.h>
 
 #include "instance.hpp"
 #include "pair.hpp"
 #include "solution.hpp"
-
+#include "tabuSearch.hpp"
 
 using namespace std;
 
@@ -18,181 +19,134 @@ using namespace std;
 // TODO: fazer o percorrimento acontecer por uma quantidade de tempo PRONTO
 // TODO: fazer a busca tabu
 
-class Lista_tabu{
-
-    public:
-
-    Solution* tabu_list;
-    int last;
-    int tamanho;
-
-    Lista_tabu(int tamanho1){
-        this->tamanho = tamanho1;    
-        this->tabu_list = new Solution[this->tamanho];
-        last = -1;    
-    }
-
-    ~Lista_tabu(){
-        delete[] this->tabu_list;
-    }
-
-    void add(Solution solution){
-
-        
-        //primeiro elemento adicionado na lista
-        if(this->last == -1){
-            this->last = 0;
-            this->tabu_list[0] = solution;
-            cout<<this->tabu_list[0].solucao[0].elementos.size();
-        }
-        else{
-            if(this->last == this->tamanho - 1){
-                this->tabu_list[0] = solution;
-                this->last = 0;
-            }
-            else{
-                this->tabu_list[last+1] = solution;
-                this->last++;
-            }
-        }
-                
-
-    }  
-};
-
-
-bool is_in_tabu_list(const Lista_tabu& lista_tabu ,const Solution& solution){
+bool is_in_tabu_list(const Lista_tabu &lista_tabu, const Solution &solution)
+{
     bool resultado = false;
     int tamanho = lista_tabu.tamanho;
-    for(int i = 0; i < tamanho; i++ ){
-        
-        if(solution.solucao == lista_tabu.tabu_list[i].solucao){
+    for (int i = 0; i < tamanho; i++)
+    {
+
+        if (solution.solucao == lista_tabu.tabu_list[i].solucao)
+        {
             resultado = true;
-            cout<<"soluções iguais."<<endl;
-            break;            
-        }        
+            cout << "soluções iguais." << endl;
+            break;
+        }
     }
     return resultado;
 }
 
-Solution tabu_search(Instance instance){
+Solution tabu_search(Instance instance)
+{
 
     Funcoes funcoes;
     Solution solution(instance);
 
     vector<Grupo> grupos = solution.calcular_resultado5();
 
-
     Solution melhor_atual_total = solution;
-    double resultado_melhor_solucao_atual_total = funcoes.get_total(solution.solucao,instance.arr_Pair);
+    double resultado_melhor_solucao_atual_total = funcoes.get_total(solution.solucao, instance.arr_Pair);
     double auxiliar = 0;
 
     Lista_tabu lista_tabu(30);
-    
-    
 
-    //fazemos como na primeira melhora, percorrendo os vizinhos e salvando o melhor
-    //porém não salvamos o melhor caso ele esteja na lista tabu
-    //quando achamos o melhor atualizamos a lista tabu, substituindo a 
-    //solução mais antiga pela solução anterior
+    // fazemos como na primeira melhora, percorrendo os vizinhos e salvando o melhor
+    // porém não salvamos o melhor caso ele esteja na lista tabu
+    // quando achamos o melhor atualizamos a lista tabu, substituindo a
+    // solução mais antiga pela solução anterior
 
+    for (int i = 0; i < 20; i++)
+    {
 
+        // para guardar a melhor solução até o momento
+        auxiliar = funcoes.get_total(solution.solucao, instance.arr_Pair);
+        if (auxiliar > resultado_melhor_solucao_atual_total)
+        {
+            resultado_melhor_solucao_atual_total = auxiliar;
+            melhor_atual_total = solution;
+        }
 
-    for(int i=0;i<20;i++){
+        /*
+        get_todos_vizinhos();
 
-            //para guardar a melhor solução até o momento
-            auxiliar = funcoes.get_total(solution.solucao,instance.arr_Pair);
-            if(auxiliar > resultado_melhor_solucao_atual_total){
-                resultado_melhor_solucao_atual_total = auxiliar;
-                melhor_atual_total = solution;
-            }
-                        
-            /*
-            get_todos_vizinhos();               
+        int index = tem_maior_vizinho();
+        */
 
-            int index = tem_maior_vizinho();
-            */
-            int index = -1;
-            
-            Funcoes funcoes;
-            Solution vizinho_atual;
-            Solution vizinho_melhor;
+        Funcoes funcoes;
+        Solution vizinho_atual;
+        Solution vizinho_melhor;
 
-            vector<Solution> vizinhos2;
+        vector<Solution> vizinhos2;
 
-            //o resultado inicial é -1, para que algum vizinho seja sempre escolhido
-            double resultado_atual = -1;
-            double resultado_melhor = resultado_atual;
+        // o resultado inicial é -1, para que algum vizinho seja sempre escolhido
+        double resultado_atual = -1;
+        double resultado_melhor = resultado_atual;
 
-            vector<Grupo> solucao_atual = solution.solucao;
+        vector<Grupo> solucao_atual = solution.solucao;
 
-            // fazer para todos os pares de grupos
-            for (int i = 0; i < solucao_atual.size() - 1; i++)
+        // fazer para todos os pares de grupos
+        for (int i = 0; i < solucao_atual.size() - 1; i++)
+        {
+            for (int i2 = i + 1; i2 < solucao_atual.size(); i2++)
             {
-                for (int i2 = i + 1; i2 < solucao_atual.size(); i2++)
+                // cout<<i<<", "<<i2 <<endl;
+                // para cada par de grupos nós trocamos o primeiro elemento
+                // de um grupo com o primeiro elemento de outro
+                // e adicionamos o resultado no array de vizinhos
+                funcoes.trocaElementos2(solucao_atual[i], solucao_atual[i2]);
+
+                // adicionamos o vector de grupos com os elementos trocados no vizinho
+                Solution solucao1;
+                solucao1.instance = instance;
+                vizinhos2.push_back(solucao1);
+                vizinhos2.back().solucao = solucao_atual;
+
+                // adiciona ao vizinho um ponteiro para a solução de onde ele veio
+                vizinhos2.back().vizinhos = {};
+                vizinhos2.back().vizinhos.push_back(solution);
+
+                // restauramos a solução atual
+                funcoes.trocaElementos2(solucao_atual[i], solucao_atual[i2]);
+
+                // mantemos apenas o vizinho melhor e o atual
+                vizinho_atual = vizinhos2.back();
+
+                // removemos o vizinho da lista de vizinhos para não gastar memória
+                vizinhos2.pop_back();
+
+                resultado_atual = funcoes.get_total(vizinho_atual.solucao, instance.arr_Pair);
+
+                if (resultado_atual > resultado_melhor && (not is_in_tabu_list(lista_tabu, vizinho_atual)))
                 {
-                    // cout<<i<<", "<<i2 <<endl;
-                    // para cada par de grupos nós trocamos o primeiro elemento
-                    // de um grupo com o primeiro elemento de outro
-                    // e adicionamos o resultado no array de vizinhos
-                    funcoes.trocaElementos2(solucao_atual[i], solucao_atual[i2]);
-
-                    // adicionamos o vector de grupos com os elementos trocados no vizinho
-                    Solution solucao1;
-                    solucao1.instance = instance;
-                    vizinhos2.push_back(solucao1);
-                    vizinhos2.back().solucao = solucao_atual;
-
-                    // adiciona ao vizinho um ponteiro para a solução de onde ele veio
-                    vizinhos2.back().vizinhos = {};
-                    vizinhos2.back().vizinhos.push_back(solution);
-
-                    // restauramos a solução atual
-                    funcoes.trocaElementos2(solucao_atual[i], solucao_atual[i2]);
-
-
-                    //mantemos apenas o vizinho melhor e o atual
-                    vizinho_atual = vizinhos2.back();
-
-                    //removemos o vizinho da lista de vizinhos para não gastar memória
-                    vizinhos2.pop_back();
-
-                    resultado_atual = funcoes.get_total(vizinho_atual.solucao, instance.arr_Pair);
-
-                    if(resultado_atual > resultado_melhor && (not is_in_tabu_list(lista_tabu,vizinho_atual) ) ){
-                        resultado_melhor = resultado_atual;
-                        vizinho_melhor = vizinho_atual;
-                        index = 0;
-                    }
+                    resultado_melhor = resultado_atual;
+                    vizinho_melhor = vizinho_atual;
                 }
             }
+        }
 
-            solution.vizinhos.push_back(vizinho_melhor);
+        solution.vizinhos.push_back(vizinho_melhor);
 
-            //a solução atual passa a ser o melhor vizinho, mesmo que a solução atual seja melhor.
-            solution = solution.vizinhos.back();
-
-
-    }    
+        // a solução atual passa a ser o melhor vizinho, mesmo que a solução atual seja melhor.
+        solution = solution.vizinhos.back();
+    }
 
     return melhor_atual_total;
 
-/*
-        for(int i = 0; i < 10;i++){
-            lista_tabu.add(solution);            
-        }   
+    /*
+            for(int i = 0; i < 10;i++){
+                lista_tabu.add(solution);
+            }
 
-        if(is_in_tabu_list(lista_tabu,solution)){
-            cout<<"solução está na tabu search! "<<endl;
-        }
-        
-        else{
-        cout<<"a"<<endl;
-        }
-        
+            if(is_in_tabu_list(lista_tabu,solution)){
+                cout<<"solução está na tabu search! "<<endl;
+            }
 
-*/
+            else{
+            cout<<"a"<<endl;
+            }
 
+
+    */
 }
 
 // Imprime os resultados.
@@ -276,7 +230,7 @@ void resultados(Instance instance)
     /*
         //marca o início do tempo para essa instância
         auto start = std::chrono::high_resolution_clock::now();
-    
+
         int index = solution.get_primeira_melhora2();
         Solution solution2 = solution;
 
@@ -306,22 +260,20 @@ void resultados(Instance instance)
     ////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
-    //tabu search
+    // tabu search
 
-        //marca o início do tempo para essa instância
-        auto start = std::chrono::high_resolution_clock::now();
+    // marca o início do tempo para essa instância
+    auto start = std::chrono::high_resolution_clock::now();
 
-        Solution solucao3 = tabu_search(instance);
+    Solution solucao3 = tabu_search(instance);
 
-        //marca o final do tempo para essa instância
-        auto end = std::chrono::high_resolution_clock::now();
+    // marca o final do tempo para essa instância
+    auto end = std::chrono::high_resolution_clock::now();
 
-        // Calcula o tempo decorrido
-        std::chrono::duration<double> duration = end - start;
+    // Calcula o tempo decorrido
+    std::chrono::duration<double> duration = end - start;
 
-        resultado5 = funcoes.get_total(solucao3.solucao,instance.arr_Pair);
-
-
+    resultado5 = funcoes.get_total(solucao3.solucao, instance.arr_Pair);
 
     ////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////
@@ -334,7 +286,7 @@ void resultados(Instance instance)
     //-1 0 8 -1 42 1 5
 
     cout << std::setprecision(15) << resultado5 << endl;
-    cout<<"tempo de execução: "<< duration.count()<<" segundos."<<endl;
+    cout << "tempo de execução: " << duration.count() << " segundos." << endl;
     cout << endl
          << endl;
     cout << endl
@@ -353,10 +305,9 @@ int main()
         "instances/Geo/Geo_n120_ss_01.txt",
         "instances/Geo/Geo_n240_ss_01.txt",
         "instances/Geo/Geo_n480_ss_01.txt",
+        // "instances/Geo/Geo_n960_ss_01.txt",
 
         /*
-        "instances/Geo/Geo_n960_ss_01.txt",
-
         "instances/RanInt/RanInt_n010_ss_01.txt",
         "instances/RanInt/RanInt_n012_ss_01.txt",
         "instances/RanInt/RanInt_n030_ss_01.txt",
@@ -365,17 +316,18 @@ int main()
         "instances/RanInt/RanInt_n240_ss_01.txt",
         "instances/RanInt/RanInt_n480_ss_01.txt",
         "instances/RanInt/RanInt_n960_ss_01.txt",
+        */
 
-        "instances/RanReal/RanReal_n010_ss_01.txt",
-        "instances/RanReal/RanReal_n012_ss_01.txt",
-        "instances/RanReal/RanReal_n030_ss_01.txt",
-        "instances/RanReal/RanReal_n060_ss_01.txt",
-        "instances/RanReal/RanReal_n120_ss_01.txt",
-        "instances/RanReal/RanReal_n240_ss_01.txt",
-        "instances/RanReal/RanReal_n480_ss_01.txt",
-        "instances/RanReal/RanReal_n960_ss_01.txt",
-
-*/
+        /*
+         "instances/RanReal/RanReal_n010_ss_01.txt",
+         "instances/RanReal/RanReal_n012_ss_01.txt",
+         "instances/RanReal/RanReal_n030_ss_01.txt",
+         "instances/RanReal/RanReal_n060_ss_01.txt",
+         "instances/RanReal/RanReal_n120_ss_01.txt",
+         "instances/RanReal/RanReal_n240_ss_01.txt",
+         "instances/RanReal/RanReal_n480_ss_01.txt",
+         "instances/RanReal/RanReal_n960_ss_01.txt",
+         */
 
         "instances/Geo/Geo_n010_ds_01.txt",
         "instances/Geo/Geo_n012_ds_01.txt",
@@ -384,29 +336,28 @@ int main()
         "instances/Geo/Geo_n120_ds_01.txt",
         "instances/Geo/Geo_n240_ds_01.txt",
         "instances/Geo/Geo_n480_ds_01.txt",
-        "instances/Geo/Geo_n960_ds_01.txt",
+        // "instances/Geo/Geo_n960_ds_01.txt",
 
-/*
-
-        "instances/RanInt/RanInt_n010_ds_01.txt" ,
-        "instances/RanInt/RanInt_n012_ds_01.txt" ,
-        "instances/RanInt/RanInt_n030_ds_01.txt" ,
-        "instances/RanInt/RanInt_n060_ds_01.txt" ,
-        "instances/RanInt/RanInt_n120_ds_01.txt" ,
-        "instances/RanInt/RanInt_n240_ds_01.txt" ,
-        "instances/RanInt/RanInt_n480_ds_01.txt" ,
+        /*
+        "instances/RanInt/RanInt_n010_ds_01.txt",
+        "instances/RanInt/RanInt_n012_ds_01.txt",
+        "instances/RanInt/RanInt_n030_ds_01.txt",
+        "instances/RanInt/RanInt_n060_ds_01.txt",
+        "instances/RanInt/RanInt_n120_ds_01.txt",
+        "instances/RanInt/RanInt_n240_ds_01.txt",
+        "instances/RanInt/RanInt_n480_ds_01.txt",
         "instances/RanInt/RanInt_n960_ds_01.txt",
 
-        "instances/RanReal/RanReal_n010_ds_01.txt" ,
-        "instances/RanReal/RanReal_n012_ds_01.txt" ,
-        "instances/RanReal/RanReal_n030_ds_01.txt" ,
+        "instances/RanReal/RanReal_n010_ds_01.txt",
+        "instances/RanReal/RanReal_n012_ds_01.txt",
+        "instances/RanReal/RanReal_n030_ds_01.txt",
         "instances/RanReal/RanReal_n060_ds_01.txt",
-        "instances/RanReal/RanReal_n120_ds_01.txt" ,
-        "instances/RanReal/RanReal_n240_ds_01.txt" ,
+        "instances/RanReal/RanReal_n120_ds_01.txt",
+        "instances/RanReal/RanReal_n240_ds_01.txt",
         "instances/RanReal/RanReal_n480_ds_01.txt",
         "instances/RanReal/RanReal_n960_ds_01.txt"
-
         */
+
     };
 
     vector<string> resultados_artigo{
@@ -673,9 +624,9 @@ RanReal_n960_ss_01.txt 46 080 984 23 040
         cout << endl;
         cout << "resultado encontrado pelo algoritmo: " << endl;
         resultados(instances[i]);
-        //cout << "resultado da tabela: " << endl;
-        //cout << resultados_artigo[i] << endl;
-        //cout << endl;
+        // cout << "resultado da tabela: " << endl;
+        // cout << resultados_artigo[i] << endl;
+        // cout << endl;
     }
 
     /*
